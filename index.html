@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Toss Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .balance {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .remaining-count {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .bet-section {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+
+        .bet-section img {
+            width: 70px;
+            height: 70px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .bet-section img:hover {
+            transform: scale(1.1);
+        }
+
+        .bet-section div {
+            margin-top: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .betting-type-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .betting-type-buttons button {
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 48%;
+            box-sizing: border-box;
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .betting-type-buttons button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .betting-area {
+            margin-bottom: 20px;
+        }
+
+        .betting-area input {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .bet-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: 2px solid red;
+        }
+
+        .history-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+
+        table, th, td {
+            border: 1px solid #dddddd;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+        }
+
+        .action-buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            width: 45%;
+            box-sizing: border-box;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: green;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                max-width: 90%;
+                padding: 10px;
+            }
+
+            .bet-section {
+                flex-direction: row;
+            }
+
+            .bet-section img {
+                width: 60px;
+                height: 60px;
+            }
+
+            .betting-type-buttons button, .betting-area button, .action-buttons button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>동전 던지기 게임</h1>
+        <div class="balance">
+            현재 잔고: <span id="balance">1,000 만 원</span>
+        </div>
+        <div class="remaining-count">
+            남은 시행 횟수: <span id="remainingCount">10/span>
+        </div>
+        <div class="bet-section">
+            <div>
+                <img id="headsBtn" src="heads.png" alt="Heads" onclick="selectBet('heads')">
+                <div>앞면</div>
+            </div>
+            <div>
+                <img id="tailsBtn" src="tails.png" alt="Tails" onclick="selectBet('tails')">
+                <div>뒷면</div>
+            </div>
+        </div>
+        <div class="betting-type-buttons">
+            <button id="percentageBetBtn" onclick="selectBetType('percentage')">비율 베팅</button>
+            <button id="fixedBetBtn" onclick="selectBetType('fixed')">고정 베팅</button>
+        </div>
+        <div class="betting-area">
+            <input type="number" id="betAmount" placeholder="Bet Amount" min="1">
+            <button class="bet-button" onclick="tossCoin()">베팅</button>
+        </div>
+        <div id="resultMessage" class="message"></div>
+    </div>
+    <div class="history-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>앞/뒤</th>
+                    <th>베팅액</th>
+                    <th>결과</th>
+                    <th>잔고</th>
+                </tr>
+            </thead>
+            <tbody id="bettingHistory">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="action-buttons">
+        <button onclick="resetGame()">다시시작 하기</button>
+        <button onclick="endGame()">그만하기</button>
+    </div>
+
+    <script>
+        let balance = 1000;
+        let remainingCount = 100// 총 시행 횟수
+        let selectedBet = '';
+        let selectedBetType = 'fixed'; // Default to fixed bet
+        let lastBetAmount = ''; // Last entered bet amount or percentage
+        let historyData = [];
+
+        function formatCurrency(value) {
+            return value.toLocaleString() + ' 만 원';
+        }
+
+        function updateBalance() {
+            document.getElementById('balance').innerText = formatCurrency(balance);
+            document.getElementById('remainingCount').innerText = remainingCount;
+
+            // Check for bankruptcy or victory
+            if (balance <= 100) {
+                showPopup('파산했습니다!', () => {
+                    saveGameDataAndRedirect();
+                });
+            } else if (balance >= 10000) {
+                showPopup('승리했습니다!', () => {
+                    saveGameDataAndRedirect();
+                });
+            } else if (remainingCount === 0) {
+                showPopup('게임 종료!', () => {
+                    saveGameDataAndRedirect();
+                });
+            }
+        }
+
+        function selectBet(type) {
+            selectedBet = type;
+
+            document.getElementById('headsBtn').style.border = '';
+            document.getElementById('tailsBtn').style.border = '';
+
+            if (type === 'heads') {
+                document.getElementById('headsBtn').style.border = '3px solid #4CAF50';
+            } else {
+                document.getElementById('tailsBtn').style.border = '3px solid #4CAF50';
+            }
+        }
+
+        function selectBetType(type) {
+            selectedBetType = type;
+
+            document.getElementById('percentageBetBtn').classList.remove('active');
+            document.getElementById('fixedBetBtn').classList.remove('active');
+
+            if (type === 'percentage') {
+                document.getElementById('percentageBetBtn').classList.add('active');
+                document.getElementById('betAmount').placeholder = 'Percentage (e.g., 10 for 10%)';
+            } else {
+                document.getElementById('fixedBetBtn').classList.add('active');
+                document.getElementById('betAmount').placeholder = 'Bet Amount';
+            }
+
+            // Keep the last entered value in the input field
+            document.getElementById('betAmount').value = lastBetAmount;
+        }
+
+        function tossCoin() {
+            if (remainingCount <= 0) {
+                alert('더 이상 베팅할 수 없습니다.');
+                return;
+            }
+
+            let betAmount = parseInt(document.getElementById('betAmount').value);
+            lastBetAmount = betAmount; // Store the last entered amount
+
+            if (selectedBetType === 'percentage') {
+                if (isNaN(betAmount) || betAmount <= 0 || betAmount > 100) {
+                    alert('유효한 비율(1-100)을 입력해주세요.');
+                    return;
+                }
+                betAmount = Math.floor((balance * betAmount) / 100);
+            }
+
+            if (!selectedBet) {
+                alert('먼저 앞면 또는 뒷면을 선택해주세요.');
+                return;
+            }
+            if (isNaN(betAmount) || betAmount <= 0) {
+                alert('유효한 베팅 금액을 입력해주세요.');
+                return;
+            }
+            if (betAmount > balance) {
+                alert('잔고가 부족합니다.');
+                return;
+            }
+
+            const random = Math.random();
+            const result = random < 0.6 ? 'heads' : 'tails';
+            let outcome = '';
+
+            if (result === selectedBet) {
+                balance += betAmount;
+                outcome = '당첨';
+            } else {
+                balance -= betAmount;
+                outcome = '실패';
+            }
+
+            remainingCount--; // 남은 횟수 감소
+
+            updateBalance();
+            addToHistory(selectedBet, betAmount, outcome, balance);
+            historyData.push(balance);
+
+            // 팝업 메시지 표시
+            showPopup(result === 'heads' ? '앞면이 나왔습니다!' : '뒷면이 나왔습니다!');
+
+            // Keep the last entered value in the input field
+            document.getElementById('betAmount').value = lastBetAmount;
+            document.getElementById('headsBtn').style.border = '';
+            document.getElementById('tailsBtn').style.border = '';
+        }
+
+        function addToHistory(betType, betAmount, outcome, currentBalance) {
+            const tableBody = document.getElementById('bettingHistory');
+            const newRow = document.createElement('tr');
+            const betTypeCell = document.createElement('td');
+            const betAmountCell = document.createElement('td');
+            const outcomeCell = document.createElement('td');
+            const balanceCell = document.createElement('td');
+
+            betTypeCell.innerText = betType === 'heads' ? '앞면' : '뒷면';
+            betAmountCell.innerText = formatCurrency(betAmount);
+            outcomeCell.innerText = outcome;
+            balanceCell.innerText = formatCurrency(currentBalance);
+
+            newRow.appendChild(betTypeCell);
+            newRow.appendChild(betAmountCell);
+            newRow.appendChild(outcomeCell);
+            newRow.appendChild(balanceCell);
+            tableBody.appendChild(newRow);
+        }
+
+        function showPopup(message, callback) {
+            // Use a custom popup message with a timeout
+            const popup = document.createElement('div');
+            popup.style.position = 'fixed';
+            popup.style.top = '50%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            popup.style.padding = '20px';
+            popup.style.backgroundColor = '#f0f0f0';
+            popup.style.border = '2px solid #4CAF50';
+            popup.style.zIndex = '9999';
+            popup.style.textAlign = 'center';
+            popup.style.fontSize = '18px';
+            popup.style.fontWeight = 'bold';
+            popup.innerText = message;
+
+            document.body.appendChild(popup);
+
+            setTimeout(() => {
+                document.body.removeChild(popup);
+                if (callback) {
+                    callback();
+                }
+            }, 1000); // 1초 후 자동으로 팝업 사라짐
+        }
+
+        function saveGameDataAndRedirect() {
+            localStorage.setItem('historyData', JSON.stringify(historyData));
+            window.location.href = 'result.html';
+        }
+
+        function resetGame() {
+            balance = 1000;
+            remainingCount = 100; // Reset remaining count
+            selectedBet = '';
+            selectedBetType = 'fixed';
+            lastBetAmount = ''; // Reset last entered amount
+            historyData = [];
+            document.getElementById('bettingHistory').innerHTML = '';
+            updateBalance();
+            selectBetType('fixed'); // Reset to fixed bet as default
+        }
+
+        function endGame() {
+            saveGameDataAndRedirect();
+        }
+
+        // Set default bet type to 'fixed'
+        selectBetType('fixed');
+        updateBalance();
+    </script>
+</body>
+</html>
