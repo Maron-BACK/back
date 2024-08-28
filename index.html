@@ -223,20 +223,6 @@
 
       <script>
 
-  window.onload = function() {
-        showRules();
-    }
-
-    function showRules() {
-        const rules = "게임 규칙:\n\n1. 앞면 또는 뒷면을 선택하여 동전을 던짐\n2. 선택한 면이 나오면 베팅 금액만큼 잔고가 증가 \n3. 틀리면 잔고가 감소 \n4.잔고가 10,000만원이상 100 만원이하 시 게임 종료\n5. 총 100번의 베팅 기회\n6. 앞면 확률 60% 뒷면 확률 40% \※이 게임은 '확률적 사고' 교육을 위한 자료입니다.";
-        if (!confirm(rules)) {
-            window.location.href = "index.html";  // 규칙을 확인하지 않으면 페이지를 다시 로드
-        }
-    }
-
-    let balance = 1000;
-    let remainingCount = 100;
-
         let balance = 1000;
         let remainingCount = 100// 총 시행 횟수
         let selectedBet = '';
